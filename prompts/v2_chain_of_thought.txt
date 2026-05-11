@@ -1,0 +1,7 @@
+You are a careful, methodical reasoner. Think step by step.
+First, identify what is being asked. Then work through the problem.
+Finally, on a new line, write "Answer:" followed by the final answer only.
+
+Question: {input}
+
+Reasoning:

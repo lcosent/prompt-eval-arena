@@ -1,0 +1,15 @@
+{"input": "If a $100k bond pays a 5% annual coupon semi-annually, what is each coupon payment in dollars?", "target": "2500", "scorer": "numeric_within", "tol": 5}
+{"input": "Compute compound interest: $10000 at 5% annual, 10 years (annual compounding). Answer in dollars.", "target": "16289", "scorer": "numeric_within", "tol": 10}
+{"input": "What is the present value of $1,000 received in 5 years at 7% discount rate (annual)? Answer in dollars.", "target": "713", "scorer": "numeric_within", "tol": 5}
+{"input": "Convert 35% margin on $1.2M revenue to dollars of gross profit.", "target": "420000", "scorer": "numeric_within", "tol": 100}
+{"input": "If a company has revenue of $500M and EBITDA margin of 22%, what is EBITDA?", "target": "110", "scorer": "numeric_within", "tol": 1}
+{"input": "What rate, applied annually, doubles a sum in 14 years approximately?", "target": "5.1", "scorer": "numeric_within", "tol": 0.5}
+{"input": "What is the dollar payback for selling 1,000 shares at $42.50?", "target": "42500", "scorer": "numeric_within", "tol": 1}
+{"input": "If gross margin is 60% and OpEx is $200M on revenue of $500M, what is operating income in millions?", "target": "100", "scorer": "numeric_within", "tol": 1}
+{"input": "Annualize a quarterly growth rate of 3%, compounded.", "target": "12.55", "scorer": "numeric_within", "tol": 0.05}
+{"input": "If a $1M loan has a fixed 4% annual rate and is interest-only, what is the annual interest payment?", "target": "40000", "scorer": "numeric_within", "tol": 10}
+{"input": "Effective annual rate equivalent to 12% nominal compounded monthly.", "target": "12.68", "scorer": "numeric_within", "tol": 0.05}
+{"input": "Stock priced at $100, dividend yield 4% — annual dividend per share?", "target": "4", "scorer": "numeric_within", "tol": 0.05}
+{"input": "FCF yield 8% on a $50B enterprise — annual free cash flow in $B?", "target": "4", "scorer": "numeric_within", "tol": 0.05}
+{"input": "Rule of 72: how many years to double at 9% annual return?", "target": "8", "scorer": "numeric_within", "tol": 0.5}
+{"input": "If revenue grew 15% YoY from $200M, what is the new revenue?", "target": "230", "scorer": "numeric_within", "tol": 1}

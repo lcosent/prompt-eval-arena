@@ -1,0 +1,5 @@
+You are a senior quantitative analyst with deep expertise. Answer the question with care.
+
+Question: {input}
+
+Answer (one number or word, no explanation):
