@@ -1,6 +1,6 @@
 # prompt-eval-arena
 
-A small, **rigorous** A/B harness for prompt iteration. Run two prompt variants on the same dataset and report whether the difference is statistically significant — instead of eyeballing 5 examples and shipping.
+A small, **rigorous** A/B harness for prompt iteration. Supports both **deterministic scoring** (for narrow ground-truth tasks) and **LLM-as-judge** (for open-ended outputs). Reports whether the difference between two prompts is statistically significant — instead of eyeballing 5 examples and shipping.
 
 ```
 $ arena ab \
@@ -30,13 +30,45 @@ Most prompt iteration looks like:
 
 This produces silent regressions. The right setup is:
 
-- A **held-out eval set** with stable ground truth.
+- A **held-out eval set** with stable rubric or ground truth.
 - A **paired comparison** (same example, both prompts).
 - **Multiple sampling runs** to estimate per-example variance.
 - A **significance test** (Wilcoxon signed-rank for paired non-normal data).
 - An **effect size** alongside the p-value.
 
 `prompt-eval-arena` does all of that in one CLI command, with prompt versioning so you can compare any two prompts in your history.
+
+## Two scoring modes
+
+### Deterministic scorers — *default; use when you can*
+
+When ground truth is a label, a number, or a regex match, deterministic scoring is **fast, cheap, and free of judge bias**. Built-in:
+
+| Scorer | Use for |
+|---|---|
+| `exact_match` | One canonical answer |
+| `label_match` | Answer in a small synonym set |
+| `numeric_within` | Numeric answer with tolerance |
+| `contains` | Required phrase or substring |
+
+### LLM-as-judge — *use when you must*
+
+Some outputs do not have a ground-truth string: summarization quality, tone, "is this email professional," "does this answer cover all 5 points." For those, use `llm_judge`.
+
+```jsonl
+{"input": "Write a 2-sentence apology email for a service outage.", "scorer": "llm_judge", "rubric": ["acknowledges the issue specifically", "takes responsibility without blaming users", "states a concrete next step", "stays within 2 sentences"]}
+```
+
+The judge model is configurable via `ARENA_JUDGE_MODEL` (default: `openai:gpt-4o-mini`).
+
+**Judge mode caveats — read these:**
+
+1. **Use a stronger model as judge than as student.** If you're A/B-testing two prompts on `gpt-4o-mini`, judge with `gpt-4o` or `claude-3-5-sonnet`.
+2. **Order matters.** Judges have position bias. The arena randomly swaps A/B order per example when running judge mode to reduce this.
+3. **Don't compare a model to itself as judge.** "GPT-4o judges its own output" is a red flag in any paper. Use a different family for the judge.
+4. **Calibrate before trusting.** Run the judge against a labeled subset and verify human-judge agreement on at least 30 examples before relying on aggregate scores.
+
+When in doubt, write a 5-line deterministic check instead. LLM-as-judge is an escape hatch, not a default.
 
 ## Quickstart
 
@@ -46,7 +78,7 @@ pip install -e .
 # initialize an arena in the current directory
 arena init my-eval
 
-# add prompts and an eval set
+# deterministic A/B
 arena ab \
     --a prompts/v1.txt \
     --b prompts/v2.txt \
@@ -54,8 +86,13 @@ arena ab \
     --model openai:gpt-4o-mini \
     --runs 3
 
-# compare any two saved runs
-arena diff runs/2026-04-01_v1.json runs/2026-04-02_v2.json
+# LLM-as-judge A/B (rubric in the eval set rows)
+export ARENA_JUDGE_MODEL=openai:gpt-4o
+arena ab \
+    --a prompts/email_v1.txt \
+    --b prompts/email_v2.txt \
+    --dataset prompts/email_rubrics.jsonl \
+    --model openai:gpt-4o-mini
 
 # best-of-K from a directory of prompt candidates
 arena tournament prompts/ --dataset prompts/eval_set.jsonl
@@ -63,14 +100,17 @@ arena tournament prompts/ --dataset prompts/eval_set.jsonl
 
 ## Eval set format
 
-JSONL, one example per line:
+JSONL, one example per line. The `scorer` field picks which scoring function runs.
 
+**Deterministic example:**
 ```json
-{"input": "What is the term sheet liquidation preference?", "target": "1x non-participating", "scorer": "label_match", "labels": ["1x non-participating", "1x, non-participating"]}
-{"input": "...", "target": "...", "scorer": "numeric_within", "tol": 0.01}
+{"input": "Compute compound interest: $10000 at 5% for 10 years.", "target": "16289", "scorer": "numeric_within", "tol": 10}
 ```
 
-Bundled scorers: `exact_match`, `label_match`, `numeric_within`, `contains`. Drop in your own as Python functions under `arena/scorers.py`.
+**LLM-as-judge example:**
+```json
+{"input": "Summarize the article in 3 bullets.", "scorer": "llm_judge", "rubric": ["covers the main thesis", "captures one numerical fact", "fits in 3 bullets"]}
+```
 
 ## Statistical method
 
@@ -85,7 +125,7 @@ Variance estimation: across replicate runs, computes the noise floor below which
 ## What this is not
 
 - Not a hosted leaderboard. Local-first.
-- Not an LLM-as-judge framework. Use [promptfoo](https://github.com/promptfoo/promptfoo) or [Braintrust](https://www.braintrustdata.com) for that. They are complementary — use this for narrow, deterministically-scoreable tasks where you want statistical rigor.
+- Not a substitute for a real eval framework — see [Inspect](https://github.com/UKGovernmentBEIS/inspect_ai), [promptfoo](https://github.com/promptfoo/promptfoo), [Braintrust](https://www.braintrustdata.com). prompt-eval-arena is intentionally small and focused on the statistical-rigor part.
 - Not a fine-tuning pipeline.
 
 ## License
